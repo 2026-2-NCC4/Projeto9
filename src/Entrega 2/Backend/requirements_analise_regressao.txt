@@ -1,0 +1,8 @@
+pandas>=2.0,<3
+numpy>=1.24,<3
+statsmodels>=0.14,<1
+scikit-learn>=1.3,<2
+matplotlib>=3.7,<4
+scipy>=1.10,<2
+nbformat>=5.7,<6
+nbclient>=0.9,<1
