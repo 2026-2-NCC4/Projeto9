@@ -3,7 +3,7 @@
 
 <p align="center">
   <a href="https://www.fecap.br/">
-    <img src="https://www.fecap.br/wp-content/uploads/2023/12/logo-fecap.png" alt="FECAP" width="200">
+    <img src="[https://www.fecap.br/wp-content/uploads/2023/12/logo-fecap.png](https://camo.githubusercontent.com/9640a318074cf476f8f30d06059763c45be295736ae6e618e824b21b031e74dc/68747470733a2f2f656e637279707465642d74626e302e677374617469632e636f6d2f696d616765733f713d74626e3a414e6439476352685a5072526138394b6d61305a5a6f67786d3070692d74436e5f544c4b65484756787977702d4c584146475233423144506f75414a5948674b5a4756305854456634414526757371703d434155)" alt="FECAP" width="200">
   </a>
 </p>
 
