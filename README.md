@@ -1,92 +1,282 @@
-# FECAP - Fundação de Comércio Álvares Penteado
+
+# FECAP — Fundação Escola de Comércio Álvares Penteado
 
 <p align="center">
-<a href= "https://www.fecap.br/"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhZPrRa89Kma0ZZogxm0pi-tCn_TLKeHGVxywp-LXAFGR3B1DPouAJYHgKZGV0XTEf4AE&usqp=CAU" alt="FECAP - Fundação de Comércio Álvares Penteado" border="0"></a>
+  <a href="https://www.fecap.br/">
+    <img src="https://www.fecap.br/wp-content/uploads/2023/12/logo-fecap.png" alt="FECAP" width="200">
+  </a>
 </p>
 
-# DashBird
+# DashBird — Inteligência Financeira
 
-## Meninos do Back
+**Grupo:** Los Meninos do Back  
+**Instituição:** FECAP  
+**Projeto Interdisciplinar — 2026/2**
 
-## Integrantes: <a href="https://www.linkedin.com/in/breno-groba/">Breno Frederico Gonzalez Groba</a>, <a href="https://www.linkedin.com/in/artur-loreto/">Artur Loreto</a>, <a href="https://www.linkedin.com/in/gustavo-archangelo/">Gustavo Archangelo</a>, <a href="www.linkedin.com/in/luiizsilva/">Luiz Antonio Santos Silva</a>
+## Integrantes
 
-## Professores Orientadores: <a href="https://www.linkedin.com/in/eduardo-savino/">Eduardo Savino Gomes</a>, <a href="https://www.linkedin.com/in/professorrodnil/">Rodnil Lisbôa</a>, <a href="https://www.linkedin.com/school/fecap/posts/?feedView=all">Luis Fernando dos Santos Pires</a>, <a href="https://www.linkedin.com/school/fecap/posts/?feedView=all">Mauricio Lopes Da Cunha</a>
+- [Breno Frederico Gonzalez Groba](https://www.linkedin.com/in/breno-groba/)
+- [Artur Loreto](https://www.linkedin.com/in/artur-loreto/)
+- [Gustavo Archangelo](https://www.linkedin.com/in/gustavo-archangelo/)
+- [Luiz Antonio Santos Silva](https://www.linkedin.com/in/luiizsilva/)
 
+## Professores orientadores
 
+- Eduardo Savino Gomes
+- Rodnil Lisbôa
+- Luis Fernando dos Santos Pires
+- Mauricio Lopes Da Cunha
 
 <p align="center">
-<img src="imagens/dashbird.jpg" alt="DashBird" border="0">
-  Developed by <a href="https://github.com/2026-2-NCC4/Projeto9">Los Meninos do Back</a> <a rel="license" href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>
+  <img src="imagens/dashbird.jpg" alt="DashBird" width="780">
 </p>
 
-## Descrição
+---
 
-O DashBird é um projeto desenvolvido pelo grupo Los Meninos do Back, formado por estudantes de Ciência da Computação da FECAP, como parte do Projeto Integrador (PI).
-<br><br>
-A proposta consiste na criação de uma solução digital para apoiar nas previsões financeiras feitas por empresas as quais são clientes da CTI.
-<br><br>
-A solução é composta pelos seguintes módulos integrados:
+## 🌐 Acesse o DashBird
 
-## Componentes do Sistema
+**Dashboard publicado no Streamlit Cloud:**
 
-- **Módulo Web (Profissional/Admin):**
+https://projeto9-qniy57reztrsml8iankmqj.streamlit.app/
 
-- **Backend (API) e Banco de Dados:**
+**Credenciais de demonstração:**
 
-O DashBird tem como objetivo central facilitar a gestão economica e otimizar o acompanhamento da empresa junto de suas previsões financeiras.
+- **Usuário:** `admin`
+- **Senha:** `1234`
 
-## 🛠 Estrutura de pastas
+O acesso é destinado à avaliação acadêmica do projeto, utilizando dados financeiros simulados.
+
+---
+
+## Sobre o projeto
+
+O **DashBird** é uma plataforma de inteligência financeira desenvolvida por estudantes de Ciência da Computação da FECAP, como parte do Projeto Interdisciplinar em parceria com a CTI.
+
+O projeto tem como objetivo apoiar a análise e interpretação de dados financeiros por meio de indicadores, gráficos interativos, comparações entre cenários e simulações.
+
+A plataforma transforma dados financeiros em informações organizadas, facilitando o acompanhamento de resultados e o apoio à tomada de decisões.
+
+## Funcionalidades
+
+### Visão geral
+
+Apresenta os principais indicadores financeiros:
+
+- Receita
+- Resultado operacional
+- Lucro líquido
+- EBITDA
+- Geração líquida de caixa
+- Saldo final de caixa
+- Ativo total
+- Margem operacional
+
+### Contabilidade e Finanças
+
+Disponibiliza indicadores de liquidez, endividamento, rentabilidade e valor econômico.
+
+### Fluxo de caixa
+
+Permite analisar a geração de caixa, os saldos financeiros e sua evolução ao longo dos períodos simulados.
+
+### Comparação de cenários
+
+Possibilita comparar diferentes cenários financeiros e analisar seus resultados.
+
+### Simulador financeiro
+
+Permite realizar análises de sensibilidade por meio da alteração de premissas financeiras.
+
+### Análises estatísticas
+
+Apresenta recursos de análise exploratória, gráficos e indicadores estatísticos.
+
+### Filtros interativos
+
+O usuário pode selecionar:
+
+- Ano simulado
+- Cenário individual
+- Média simples dos cenários
+- Intervalo de anos
+
+---
+
+## Base de dados
+
+A plataforma utiliza dados financeiros simulados disponibilizados no contexto do projeto com a CTI.
+
+A base preparada contempla:
+
+- **1.200 cenários financeiros**
+- **12 anos simulados**
+- **14.400 combinações de ano e cenário**
+
+Os dados foram preparados e organizados utilizando Python, permitindo sua utilização nos indicadores e gráficos do dashboard.
+
+---
+
+## Tecnologias utilizadas
+
+| Tecnologia | Finalidade |
+|---|---|
+| Python | Desenvolvimento da aplicação e processamento dos dados |
+| Streamlit | Interface web do dashboard |
+| Pandas | Manipulação e análise dos dados |
+| NumPy | Operações numéricas |
+| Plotly | Visualização de dados e gráficos interativos |
+| GitHub | Versionamento e organização do projeto |
+| Streamlit Cloud | Publicação da aplicação na nuvem |
+
+## Arquitetura do sistema
+
+O DashBird está organizado em Frontend e Backend.
+
+**Frontend**
+
+Responsável pela interface, navegação, apresentação dos indicadores, gráficos e interação com o usuário.
+
+**Backend**
+
+Responsável pelo processamento dos dados, cálculos financeiros, indicadores contábeis, scripts de preparação e validação.
+
+A aplicação utiliza o Streamlit como serviço principal, integrando os componentes do Frontend aos módulos Python do Backend.
+
+---
+
+## Estrutura de pastas
+
+```text
+Projeto9/
+│
+├── README.md
+│
+├── documentos/
+│   ├── README.md
+│   ├── Entrega 1/
+│   │   ├── Análise Inferencial de Dados/
+│   │   ├── Contabilidade e Finanças/
+│   │   ├── Engenharia de Software e Arquitetura de Sistemas/
+│   │   └── Projeto Interdisciplinar Ciencia de Dados/
+│   │
+│   └── Entrega 2/
+│       ├── Análise Inferencial de Dados/
+│       ├── Contabilidade e Finanças/
+│       ├── Engenharia de Software e Arquitetura de Sistemas/
+│       └── Projeto Interdisciplinar Ciencia de Dados/
+│
+├── imagens/
+│   └── dashbird.jpg
+│
+└── src/
+    ├── Entrega 1/
+    │   ├── Frontend/
+    │   └── Backend/
+    │
+    └── Entrega 2/
+        ├── Frontend/
+        │   ├── app.py
+        │   ├── ui_contabilidade.py
+        │   ├── requirements.txt
+        │   └── .streamlit/
+        │
+        ├── Backend/
+        │   ├── core/
+        │   ├── dados/
+        │   ├── scripts/
+        │   ├── testes/
+        │   ├── relatorios/
+        │   └── referencias/
+        │
+        └── README_Deploy_DashBird.md
 ```
-📁 documentos
-├── 📁 Entrega-01
-│   ├── 📁 Análise Inferencial de Dados
-│   ├── 📁 Contabilidade e Finanças
-│   ├── 📁 Engenharia de Software e Arquitetura de Sistemas
-│   └── 📁 Projeto Interdisciplinar Ciencia de Dados
-├── 📁 Entrega-02
-│   ├── 📁 Análise Inferencial de Dados
-│   ├── 📁 Contabilidade e Finanças
-│   ├── 📁 Engenharia de Software e Arquitetura de Sistemas
-│   └── 📁 Projeto Interdisciplinar Ciencia de Dados
-├── 📄 MODELO_BANNER_FECAP_2026_1.pptx
-├── 📄 Documento - Projeto de Extensão.docx
-└── 📄 README.md
-📁 imagens
-└── 🖼️ dashbird.jpg
-📁 src
-├── 📁 Entrega-01
-│   ├── 📁 Análise Inferencial de Dados
-│   ├── 📁 Contabilidade e Finanças
-│   ├── 📁 Engenharia de Software e Arquitetura de Sistemas
-│   └── 📁 Projeto Interdisciplinar Ciencia de Dados
-├── 📁 Entrega-02
-│   ├── 📁 Análise Inferencial de Dados
-│   ├── 📁 Contabilidade e Finanças
-│   ├── 📁 Engenharia de Software e Arquitetura de Sistemas
-│   └── 📁 Projeto Interdisciplinar Ciencia de Dados
-🔥 .gitignore
-📝 README.md
-```
-## 📁 Estrutura do Projeto ##
-```
-📄 Arquivos
 
-- README.MD -> Este arquivo serve como guia geral do projeto, explicando sua estrutura, objetivos e instruções de uso.
+---
 
-📁 Pastas
+## Como executar o projeto
 
-- documentos/ — Contém todas as entregas solicitadas pelos professores!
+### Pré-requisitos
 
-- src/ — Código-fonte do projeto.
+- Python instalado
+- pip
+- Git (para clonar o repositório)
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/2026-2-NCC4/Projeto9.git
 ```
 
-## 📋 Licença/License
+### 2. Acessar a pasta do projeto
 
-<a href="https://github.com/2026-1-NCC3/Projeto4">DashBird</a> © 2026 by <a href="https://www.linkedin.com/in/breno-groba/">Breno Groba</a>, <a href="https://www.linkedin.com/in/artur-loreto/">Artur Loreto</a>, <a href="https://www.linkedin.com/in/gustavo-archangelo/">Gustavo Archangelo</a>, <a href="www.linkedin.com/in/luiizsilva/">Luiz Antonio Santos Silva</a>, <a href="https://www.fecap.br/">FECAP</a>
-	is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+```bash
+cd Projeto9
+```
 
-## 🎓 Referências
+### 3. Instalar as dependências
 
-Aqui estão as referências usadas no projeto.
+```bash
+python -m pip install -r "src/Entrega 2/Frontend/requirements.txt"
+```
 
-1. <https://www.cti.com.br/>
+### 4. Executar a aplicação
+
+```bash
+python -m streamlit run "src/Entrega 2/Frontend/app.py"
+```
+
+A aplicação será disponibilizada no navegador, normalmente em:
+
+http://localhost:8501
+
+Para utilizar o login localmente, é necessário configurar as credenciais por variáveis de ambiente ou pelos Secrets do Streamlit.
+
+Mais informações estão disponíveis no arquivo:
+
+[src/Entrega 2/README_Deploy_DashBird.md](src/Entrega%202/README_Deploy_DashBird.md)
+
+---
+
+## Entregas acadêmicas
+
+Toda a documentação está organizada por disciplina e etapa.
+
+### Entrega 1
+
+[Consultar documentos da Entrega 1](documentos/Entrega%201/)
+
+### Entrega 2
+
+[Consultar documentos da Entrega 2](documentos/Entrega%202/)
+
+**Relatório de Ciência de Dados — Entrega 2:**
+
+[Visualizar relatório do DashBird](documentos/Entrega%202/Projeto%20Interdisciplinar%20Ciencia%20de%20Dados/DashBird_Entrega2_Relatorio.pdf)
+
+**Documentação completa:**
+
+[Índice das entregas acadêmicas](documentos/README.md)
+
+---
+
+## Código-fonte
+
+- [Frontend — Entrega 2](src/Entrega%202/Frontend/)
+- [Backend — Entrega 2](src/Entrega%202/Backend/)
+
+---
+
+## Referências
+
+- [FECAP](https://www.fecap.br/)
+- [CTI](https://www.cti.com.br/)
+- [Python](https://www.python.org/)
+- [Streamlit](https://streamlit.io/)
+- [Pandas](https://pandas.pydata.org/)
+- [Plotly](https://plotly.com/python/)
+
+## Licença
+
+Este projeto está associado à licença Creative Commons Attribution 4.0 International (CC BY 4.0).
+
+[Consultar a licença](https://creativecommons.org/licenses/by/4.0/)
