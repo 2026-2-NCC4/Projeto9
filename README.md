@@ -6,7 +6,7 @@
 
 # DashBird
 
-## Los Meninos do Back
+## Meninos do Back
 
 ## Integrantes: <a href="https://www.linkedin.com/in/breno-groba/">Breno Frederico Gonzalez Groba</a>, <a href="https://www.linkedin.com/in/artur-loreto/">Artur Loreto</a>, <a href="https://www.linkedin.com/in/gustavo-archangelo/">Gustavo Archangelo</a>, <a href="www.linkedin.com/in/luiizsilva/">Luiz Antonio Santos Silva</a>
 
