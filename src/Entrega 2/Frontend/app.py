@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import os
 import hmac
+import logging
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -24,6 +25,9 @@ from core.contabilidade import (
     ano_mais_recente_com_liquidez,
 )
 from ui_contabilidade import mostrar_painel
+from radar_cenarios import mostrar_radar
+from auth_usuarios import BancoUsuarios, ErroCadastro, EmailJaCadastrado, ErroBancoUsuarios
+from email_recuperacao import EmailRecuperacao, ErroEnvioEmail
 
 RAIZ = BACKEND
 BASE = RAIZ / 'dados' / 'indicadores_cti.csv'
@@ -164,6 +168,167 @@ def ler_configuracao_acesso():
     return usuario, senha, permitir_demo
 
 
+def ler_configuracao_cadastro():
+    """Ativa cadastro local e lê opcionalmente um banco persistente externo."""
+    database_url = os.getenv('CTI_DATABASE_URL', '').strip()
+    habilitado = os.getenv('CTI_ENABLE_SIGNUP', 'true').strip().lower() in {'1', 'true', 'yes', 'sim'}
+    try:
+        auth = st.secrets.get('auth', {})
+        database_url = database_url or str(auth.get('database_url', '')).strip()
+        if 'allow_signup' in auth:
+            habilitado = str(auth.get('allow_signup')).strip().lower() in {'1', 'true', 'yes', 'sim'}
+    except Exception:
+        pass
+    return BancoUsuarios(database_url=database_url), habilitado
+
+
+def iniciar_sessao_conta(conta, modo='Conta cadastrada'):
+    st.session_state.pop('cti_chave_recuperacao_pendente', None)
+    if conta.get('chave_recuperacao'):
+        st.session_state['cti_chave_recuperacao_pendente'] = {
+            'email': conta['email'], 'chave': conta['chave_recuperacao'],
+            'mensagem': 'Conta criada com sucesso!',
+        }
+    st.session_state['cti_autenticado'] = True
+    st.session_state['cti_modo_acesso'] = modo
+    st.session_state['cti_usuario'] = conta['nome']
+    st.session_state['cti_usuario_email'] = conta['email']
+    st.session_state['cti_tentativas_login'] = 0
+    st.rerun()
+
+
+def mostrar_chave_recuperacao_pendente():
+    pendente = st.session_state['cti_chave_recuperacao_pendente']
+    _, coluna, _ = st.columns([1, 2, 1])
+    with coluna:
+        with st.container(border=True):
+            st.success(pendente['mensagem'])
+            st.markdown('## Guarde sua chave de recuperação')
+            st.write('Esta chave permite redefinir sua senha se você esquecer. Salve-a em um local seguro e não a compartilhe.')
+            st.caption(f"Conta: {pendente['email']}")
+            st.code(pendente['chave'], language=None)
+            st.download_button(
+                'Baixar chave de recuperação',
+                data=(f"DashBird — Chave de recuperação\nConta: {pendente['email']}\n"
+                      f"Chave: {pendente['chave']}\n\n"
+                      "Guarde em um local seguro. Não compartilhe esta chave.\n"
+                      "Ela só pode ser usada uma vez e será substituída após a recuperação.\n"),
+                file_name='dashbird-chave-recuperacao.txt', mime='text/plain',
+                use_container_width=True,
+            )
+            st.caption('Após continuar, esta chave não será exibida novamente. Você poderá gerar outra entrando na sua conta e confirmando sua senha.')
+            guardou = st.checkbox('Guardei minha chave em um local seguro')
+            rotulo = 'Continuar para a plataforma' if st.session_state.get('cti_autenticado') else 'Voltar para entrar'
+            if st.button(rotulo, disabled=not guardou, use_container_width=True):
+                st.session_state.pop('cti_chave_recuperacao_pendente', None)
+                st.rerun()
+
+
+def mostrar_seguranca_conta(banco, email):
+    with st.expander('Segurança da conta'):
+        st.caption('Gere uma chave para recuperar sua senha sem precisar de e-mail. Ao gerar outra, a chave anterior deixa de funcionar.')
+        with st.form('form_gerar_chave_recuperacao', clear_on_submit=True):
+            senha_atual = st.text_input('Senha atual', type='password', max_chars=128)
+            gerar = st.form_submit_button('Gerar nova chave de recuperação', use_container_width=True)
+        if gerar:
+            try:
+                chave = banco.gerar_chave_recuperacao(email, senha_atual)
+            except ErroCadastro as erro:
+                st.error(str(erro))
+            except ErroBancoUsuarios:
+                st.error('Não foi possível gerar a chave agora. Tente novamente mais tarde.')
+            else:
+                st.session_state['cti_chave_recuperacao_pendente'] = {
+                    'email': email, 'chave': chave,
+                    'mensagem': 'Nova chave de recuperação gerada.',
+                }
+                st.rerun()
+
+
+def ler_configuracao_recuperacao():
+    """Lê o SMTP sem incluir credenciais na interface ou no código-fonte."""
+    try:
+        smtp = st.secrets.get('smtp', {})
+    except Exception:
+        smtp = {}
+
+    def valor(chave, variavel, padrao=''):
+        return os.getenv(variavel) or smtp.get(chave, padrao)
+
+    host = str(valor('host', 'CTI_SMTP_HOST')).strip()
+    remetente = str(valor('from_email', 'CTI_SMTP_FROM')).strip()
+    if not host or not remetente:
+        return None
+    ssl_implicito = str(valor('use_ssl', 'CTI_SMTP_SSL', 'false')).strip().lower() in {'1', 'true', 'yes', 'sim'}
+    porta = int(valor('port', 'CTI_SMTP_PORT', 465 if ssl_implicito else 587))
+    return EmailRecuperacao(
+        host=host, remetente=remetente, porta=porta,
+        usuario=str(valor('username', 'CTI_SMTP_USER')).strip(),
+        senha=str(valor('password', 'CTI_SMTP_PASSWORD')),
+        ssl_implicito=ssl_implicito,
+    )
+
+
+def mostrar_recuperacao_senha(banco):
+    with st.expander('Esqueci minha senha'):
+        st.caption('Informe seu e-mail e a chave de recuperação que você guardou ao criar sua conta ou em Segurança da conta.')
+        try:
+            email_smtp = ler_configuracao_recuperacao()
+        except (ValueError, TypeError):
+            logging.getLogger(__name__).warning('Configuração SMTP inválida para recuperação de senha.')
+            email_smtp = None
+        email_recuperacao = ''
+        if email_smtp is not None:
+            with st.container():
+                st.markdown('**Receber um código por e-mail**')
+                with st.form('form_solicitar_recuperacao'):
+                    email_recuperacao = st.text_input('E-mail cadastrado', placeholder='voce@exemplo.com', max_chars=254)
+                    solicitar = st.form_submit_button('Enviar código de recuperação', use_container_width=True)
+                if solicitar:
+                    mensagem_envio = 'Se houver uma conta para este e-mail, enviaremos um código de recuperação. Confira também o spam e aguarde 60 segundos antes de solicitar outro.'
+                    try:
+                        with st.spinner('Solicitando código...'):
+                            banco.solicitar_recuperacao(email_recuperacao, email_smtp.enviar_codigo)
+                    except ErroCadastro as erro:
+                        st.error(str(erro))
+                    except ErroBancoUsuarios:
+                        st.error('Não foi possível solicitar a recuperação agora. Tente novamente mais tarde.')
+                    except ErroEnvioEmail:
+                        # A resposta pública permanece igual para não expor contas cadastradas.
+                        logging.getLogger(__name__).warning('Falha no envio de recuperação de senha. Verifique o serviço SMTP.')
+                        st.success(mensagem_envio)
+                    else:
+                        st.success(mensagem_envio)
+                st.caption('O código enviado por e-mail vale por 15 minutos e pode ser usado no lugar da chave.')
+
+        with st.form('form_redefinir_senha', clear_on_submit=True):
+            email_redefinicao = st.text_input('E-mail da conta', value=email_recuperacao, max_chars=254)
+            rotulo_chave = 'Chave de recuperação' if email_smtp is None else 'Código ou chave de recuperação'
+            codigo = st.text_input(rotulo_chave, placeholder='Cole a chave completa', type='password', max_chars=64)
+            nova_senha = st.text_input('Nova senha', type='password', max_chars=128,
+                                       help='De 10 a 128 caracteres, com letras e números.')
+            confirmar_senha = st.text_input('Confirmar nova senha', type='password', max_chars=128)
+            redefinir = st.form_submit_button('Redefinir senha', use_container_width=True)
+        if redefinir:
+            if nova_senha != confirmar_senha:
+                st.error('As senhas não coincidem.')
+            else:
+                try:
+                    nova_chave = banco.redefinir_senha(email_redefinicao, codigo, nova_senha)
+                except ErroCadastro as erro:
+                    st.error(str(erro))
+                except ErroBancoUsuarios:
+                    st.error('Não foi possível redefinir a senha agora. Tente novamente mais tarde.')
+                else:
+                    st.session_state['cti_tentativas_login'] = 0
+                    st.session_state['cti_chave_recuperacao_pendente'] = {
+                        'email': email_redefinicao.strip().lower(), 'chave': nova_chave,
+                        'mensagem': 'Senha redefinida com sucesso! Guarde a nova chave e entre com sua nova senha.',
+                    }
+                    st.rerun()
+        st.caption('Se você não guardou uma chave e não consegue entrar, peça ajuda ao responsável pela plataforma.')
+
+
 def tela_login():
     """Tela de entrada. O modo demo é explicitamente identificado e não é autenticação corporativa."""
     usuario_config, senha_config, permitir_demo = ler_configuracao_acesso()
@@ -196,33 +361,80 @@ def tela_login():
     with col_login:
         with st.container(border=True):
             st.markdown('## Acesse sua plataforma')
-            st.markdown('Entre com suas credenciais para visualizar os indicadores e análises.')
-            with st.form('form_login', clear_on_submit=False):
-                email = st.text_input('Usuário ou e-mail', placeholder='Digite seu usuário')
-                senha = st.text_input('Senha', type='password', placeholder='Digite sua senha')
-                entrar = st.form_submit_button('Entrar na plataforma', use_container_width=True)
-            if entrar:
-                if usuario_config and senha_config and hmac.compare_digest(email.strip(), usuario_config) and hmac.compare_digest(senha, senha_config):
-                    st.session_state['cti_autenticado'] = True
-                    st.session_state['cti_modo_acesso'] = 'Acesso configurado'
-                    st.session_state['cti_usuario'] = email.strip()
-                    st.rerun()
-                elif not usuario_config or not senha_config:
-                    st.error('O acesso com usuário e senha ainda não foi configurado. Configure .streamlit/secrets.toml ou use a demonstração local, se habilitada.')
-                else:
-                    st.error('Usuário ou senha inválidos.')
-            if permitir_demo:
-                st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
-                if st.button('Acessar demonstração', use_container_width=True, type='secondary'):
-                    st.session_state['cti_autenticado'] = True
-                    st.session_state['cti_modo_acesso'] = 'Demonstração local'
-                    st.session_state['cti_usuario'] = 'Visitante'
-                    st.rerun()
-                st.markdown('<div class="login-note">Modo demonstrativo: permite visualizar a interface sem autenticação corporativa. Não utilize esta opção em uma publicação com dados confidenciais.</div>', unsafe_allow_html=True)
+            banco, cadastro_habilitado = ler_configuracao_cadastro()
+            if cadastro_habilitado:
+                aba_entrar, aba_cadastrar = st.tabs(['Entrar', 'Criar conta'])
             else:
-                st.markdown('<div class="login-note">Acesso restrito. Para habilitar o login, configure as credenciais do ambiente. O modo de demonstração está desativado.</div>', unsafe_allow_html=True)
+                aba_entrar = st.container()
+                aba_cadastrar = None
+
+            with aba_entrar:
+                st.caption('Entre com seu usuário de demonstração ou com um e-mail cadastrado.')
+                with st.form('form_login', clear_on_submit=False):
+                    email = st.text_input('Usuário ou e-mail', placeholder='Usuário ou e-mail')
+                    senha = st.text_input('Senha', type='password', placeholder='Digite sua senha')
+                    entrar = st.form_submit_button('Entrar na plataforma', use_container_width=True)
+                if entrar:
+                    tentativas = st.session_state.get('cti_tentativas_login', 0)
+                    if tentativas >= 8:
+                        st.error('Limite de tentativas nesta sessão. Recarregue a página para tentar mais tarde.')
+                    elif usuario_config and senha_config and hmac.compare_digest(email.strip(), usuario_config) and hmac.compare_digest(senha, senha_config):
+                        iniciar_sessao_conta({'nome': email.strip(), 'email': ''}, 'Acesso configurado')
+                    else:
+                        try:
+                            conta = banco.autenticar(email, senha)
+                        except ErroBancoUsuarios:
+                            st.error('Não foi possível acessar o banco de usuários. Confira a configuração e tente novamente.')
+                        else:
+                            if conta:
+                                iniciar_sessao_conta(conta)
+                            else:
+                                st.session_state['cti_tentativas_login'] = tentativas + 1
+                                st.error('Usuário/e-mail ou senha inválidos.')
+
+                mostrar_recuperacao_senha(banco)
+
+                if permitir_demo:
+                    st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
+                    if st.button('Acessar demonstração', use_container_width=True, type='secondary'):
+                        iniciar_sessao_conta({'nome': 'Visitante', 'email': ''}, 'Demonstração local')
+                    st.caption('O modo de demonstração não substitui a autenticação corporativa.')
+
+            if aba_cadastrar is not None:
+                with aba_cadastrar:
+                    st.caption('Crie sua conta para acessar os indicadores do DashBird.')
+                    with st.form('form_cadastro', clear_on_submit=True):
+                        nome_cadastro = st.text_input('Nome completo', placeholder='Como deseja ser identificado?')
+                        email_cadastro = st.text_input('E-mail', placeholder='voce@exemplo.com')
+                        senha_cadastro = st.text_input('Criar senha', type='password',
+                                                       help='De 10 a 128 caracteres, com letras e números.')
+                        senha_confirma = st.text_input('Confirmar senha', type='password')
+                        cadastrar = st.form_submit_button('Criar minha conta', use_container_width=True)
+                    if cadastrar:
+                        if senha_cadastro != senha_confirma:
+                            st.error('As senhas não coincidem.')
+                        elif usuario_config and email_cadastro.strip() == usuario_config:
+                            st.error('Este identificador está reservado. Use outro e-mail.')
+                        else:
+                            try:
+                                conta = banco.cadastrar(nome_cadastro, email_cadastro, senha_cadastro)
+                            except EmailJaCadastrado:
+                                st.error('Este e-mail já está cadastrado. Entre com sua conta.')
+                            except ErroCadastro as erro:
+                                st.error(str(erro))
+                            except ErroBancoUsuarios:
+                                st.error('Não foi possível cadastrar agora. Confira a configuração do banco.')
+                            else:
+                                iniciar_sessao_conta(conta)
+                    if not banco.remoto:
+                        st.caption('Contas salvas neste computador. Para manter cadastros no Streamlit Cloud, configure um PostgreSQL persistente.')
+                    st.caption('Protótipo acadêmico: sem verificação de e-mail no cadastro.')
         st.markdown('<div class="login-note" style="text-align:center;margin-top:16px">CTI • INTELIGÊNCIA FINANCEIRA<br/>Ambiente de análise de dados simulados</div>', unsafe_allow_html=True)
 
+
+if st.session_state.get('cti_chave_recuperacao_pendente'):
+    mostrar_chave_recuperacao_pendente()
+    st.stop()
 
 if not st.session_state.get('cti_autenticado', False):
     tela_login()
@@ -308,6 +520,7 @@ with st.sidebar:
         'Visão executiva': '◈  Visão geral',
         'Contabilidade e Finanças': '▦  Contabilidade e Finanças',
         'Fluxo de caixa': '↗  Fluxo de caixa',
+        'Radar de cenários': '◉  Radar de cenários',
         'Comparar cenários': '⇄  Comparar cenários',
         'Simulador': '⌁  Simulador financeiro',
         'Regressão': '⌗  Análises estatísticas',
@@ -346,8 +559,12 @@ with st.sidebar:
     st.markdown('<div class="login-note">DADOS SIMULADOS • 12 ANOS<br/>R$ COMO CONVENÇÃO DE APRESENTAÇÃO</div>', unsafe_allow_html=True)
     st.divider()
     st.caption(f'Acesso: {st.session_state.get("cti_modo_acesso", "Sessão") }')
+    if st.session_state.get('cti_usuario_email'):
+        banco_conta, _ = ler_configuracao_cadastro()
+        mostrar_seguranca_conta(banco_conta, st.session_state['cti_usuario_email'])
     if st.button('Sair da plataforma', use_container_width=True):
-        for chave in ['cti_autenticado', 'cti_modo_acesso', 'cti_usuario']:
+        for chave in ['cti_autenticado', 'cti_modo_acesso', 'cti_usuario',
+                      'cti_usuario_email', 'cti_chave_recuperacao_pendente']:
             st.session_state.pop(chave, None)
         st.rerun()
 
@@ -402,7 +619,7 @@ if ano_atual not in anos_liquidez and secao in ('Visão executiva', 'Contabilida
         f'não podem ser calculados. {orientacao_liquidez} '
         'Não substituímos valores ausentes por zero ou por dados de outro ano.'
     )
-if secao != 'Contabilidade e Finanças':
+if secao not in ('Contabilidade e Finanças', 'Radar de cenários'):
     exibir_metricas(linha)
 
 if secao == 'Visão executiva':
@@ -522,6 +739,9 @@ elif secao == 'Contabilidade e Finanças':
         df_contabilidade, cenarios_selecionados, intervalo,
         ano_atual, linha, grafico_estilo,
     )
+
+elif secao == 'Radar de cenários':
+    mostrar_radar(df, int(ano_atual), float(meta), formatar_moeda, formatar_percentual)
 
 elif secao == 'Comparar cenários':
     st.subheader('Compare cenários alternativos')
